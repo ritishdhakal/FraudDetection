@@ -8,7 +8,7 @@ import com.banking.accountservice.entity.Account;
 
 public interface AccountRepository extends JpaRepository<Account, String> {
 
-    boolean xistsByEmail(String email); // user with one email - one account
+    boolean existsByEmail(String email); // user with one email - one account
 
     boolean existsByAccountNumber(String accoutNumber);
 

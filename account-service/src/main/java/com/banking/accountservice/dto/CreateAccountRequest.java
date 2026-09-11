@@ -2,6 +2,8 @@ package com.banking.accountservice.dto;
 
 import java.math.BigDecimal;
 
+import com.banking.accountservice.entity.AccountType;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -26,7 +28,7 @@ public class CreateAccountRequest {
 
     @NotBlank(message = "Account type is required")
 
-    private String accountType;
+    private AccountType accountType;
 
     @NotBlank(message = "Initial deposit is required")
     @Positive(message = "Amount must be in positive")
