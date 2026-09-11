@@ -87,7 +87,7 @@ public class AccountController {
             @PathVariable String accountNumber,
             @RequestParam BigDecimal amount) {
         accountService.creditBalance(accountNumber, amount);
-        return ResponseEntity.ok("Balance deducted successfully");
+        return ResponseEntity.ok("Balance credited successfully");
     }
 
     /*

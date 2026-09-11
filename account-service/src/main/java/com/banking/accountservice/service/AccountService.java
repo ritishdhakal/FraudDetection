@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountService {
     private final AccountRepository accountRepository;
 
-    private final SecureRandom secureRandom;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public AccountResponse createAccount(CreateAccountRequest request) {
         log.info("Creating an Accoint for {}", request.getEmail());
@@ -156,6 +156,8 @@ public class AccountService {
 
         }
         account.setBalance(account.getBalance().subtract(amount));
+        accountRepository.save(account);
+
         log.info("Balance updated and new balance is  :{}", account.getBalance());
 
     }
