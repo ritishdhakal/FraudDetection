@@ -17,6 +17,7 @@ import com.banking.transactionservice.dto.TransferRequest;
 import com.banking.transactionservice.entity.Transaction;
 import com.banking.transactionservice.entity.TransactionStatus;
 import com.banking.transactionservice.entity.TransactionType;
+import com.banking.transactionservice.event.TransactionCompletedEvent;
 import com.banking.transactionservice.event.TransactionInitiatedEvent;
 import com.banking.transactionservice.repositories.TransactionRepository;
 
@@ -105,7 +106,7 @@ public class TransactionService {
     // controller and then JSON format
 
     public List<TransactionalResponse> getTransactionHistory(String accountNumber) {
-        return transactionRepository.findBySenderAccountNumberOrderByCreatedAtDes(accountNumber).stream()
+        return transactionRepository.findBySenderAccountNumberOrderByCreatedAtDesc(accountNumber).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -120,6 +121,15 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("transaction not found " + transactionId));
 
+        if (transaction.getStatus() != TransactionStatus.PROCESSING) {
+
+            log.warn(
+                    "Transaction {} is not PROCESSING. Current status: {}",
+                    transactionId,
+                    transaction.getStatus());
+
+            return mapToResponse(transaction);
+        }
         String otpKey = "verification:otp" + transactionId;
         String storedOtp = redisTemplate.opsForValue().get(otpKey);
 
@@ -142,12 +152,25 @@ public class TransactionService {
     }
 
     private void compensateTransaction(Transaction transaction, String reason) {
+
+        /*
+         * Prevent double refund.
+         */
+        if (transaction.getStatus() != TransactionStatus.PROCESSING) {
+
+            log.warn(
+                    "Transaction {} already processed. "
+                            + "Skipping compensation.",
+                    transaction.getId());
+
+            return;
+        }
         log.warn("SAGA compensation refunding :{}  amount :{}", transaction.getSenderAccountNumber(),
                 transaction.getAmount());
 
         // sending money back to the send through account setvice
 
-        accountServiceClient.CreditBalance(transaction.getSenderAccountNumber(), transaction.getAmount());
+        accountServiceClient.creditBalance(transaction.getSenderAccountNumber(), transaction.getAmount());
         transaction.setStatus((TransactionStatus.FLAGGED));
         transaction.setFailureReason(reason + "-SAGA compensation executed ,amount refunded at " + LocalDateTime.now());
 
@@ -172,8 +195,64 @@ public class TransactionService {
         // publish fraud.detected -> Account service will consume this and block the
         // account
 
+        Map<String, Object> fraudEvent = new HashMap<>();
+        fraudEvent.put("transactioId", transaction.getId());
+        fraudEvent.put("senderAccountNumber", transaction.getSenderAccountNumber());
+        fraudEvent.put("reason", reason);
+
+        kafkaTemplate.send(FRAUD_DETECTED_TOPIC, transaction.getSenderAccountNumber(), fraudEvent);
+        log.warn("fraud is detecte published to -account {} , will be blocked kindly contact the bank",
+                transaction.getSenderAccountNumber());
+
+        // saga compeensate - refund sender
+
+        compensateTransaction(transaction, reason);
     }
 
+    private void completeTransaction(Transaction transaction) {
+
+        if (transaction.getStatus() != TransactionStatus.PROCESSING) {
+            log.warn("Transaction {} is not processing." + "Cannot complete. ", transaction.getId());
+            return;
+        }
+
+        log.info(
+                "Completing transaction: {}",
+                transaction.getId());
+
+        transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction.setCompletedAt(LocalDateTime.now());
+        transactionRepository.save(transaction);
+
+        // publish event
+
+        TransactionCompletedEvent transactionCompletedEvent = new TransactionCompletedEvent(
+                transaction.getId(),
+                transaction.getSenderAccountNumber(),
+                transaction.getReceiverAccountNumber(),
+                transaction.getAmount(),
+                transaction.getDescription());
+
+        kafkaTemplate.send(TRANSACTION_COMPLETED_TOPIC, transaction.getId(), transactionCompletedEvent);
+
+        log.info("SAGA completed -Transaction{} completed", transaction.getId());
+
+    }
+
+    // * */
+
+    public void processCleanResult(String transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("Transaction not found " + transactionId));
+
+        if (transaction.getStatus() != TransactionStatus.PROCESSING) {
+            log.warn("Transaction {} not processing- skipping ", transactionId);
+            return;
+        }
+        completeTransaction(transaction);
+    }
+
+    /* */
     private TransactionalResponse mapToResponse(Transaction transaction) {
         TransactionalResponse response = new TransactionalResponse();
         response.setId(transaction.getId());

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.banking.transactionservice.entity.Transaction;
 
 public interface TransactionRepository extends JpaRepository<Transaction, String> {
-    List<Transaction> findBySenderAccountNumberOrderByCreatedAtDes(
+    List<Transaction> findBySenderAccountNumberOrderByCreatedAtDesc(
             String senderAccountNumber);
 
     List<Transaction> findByReceiverAccountNumberOrderByCreatedAtDesc(

@@ -16,7 +16,12 @@ public interface AccountServiceClient {
             @RequestParam BigDecimal amount);
 
     @PutMapping("/api/v1/accounts/{accountNumber}/credit")
-    String CreditBalance(
+    String creditBalance(
             @PathVariable String accountNumber,
             @RequestParam BigDecimal amount);
+
+    @PutMapping("/api/v1/accounts/{accountNumber}/block")
+    String blockAccount(
+            @PathVariable String accountNumber);
+
 }
