@@ -1,5 +1,6 @@
 package com.banking.transactionservice.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -81,8 +82,14 @@ public class TransactionService {
                 savedTransaction.getSenderAccountNumber(),
                 savedTransaction.getReceiverAccountNumber(),
                 savedTransaction.getAmount(),
+
                 savedTransaction.getDescription());
 
+        BigDecimal senderPrevBalance = getPrevBalance(savedTransaction.getSenderAccountNumber());
+        savedTransaction.setSenderPrevBalance(senderPrevBalance);
+
+        BigDecimal receiverPrevBalance = getPrevBalance(savedTransaction.getReceiverAccountNumber());
+        savedTransaction.setReceiverPrevBalance(receiverPrevBalance);
         kafkaTemplate.send(TRANSACTION_INITIATED_TOPIC, savedTransaction.getId(), event);
         log.info("SAGA step-2 transaction initiated event published. {}", savedTransaction.getId());
 
@@ -95,6 +102,12 @@ public class TransactionService {
     public TransactionalResponse getTransaction(String transactionId) {
         return mapToResponse(transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transaction not found" + transactionId)));
+    }
+
+    // get user previous balance
+    public BigDecimal getPrevBalance(String accountNumber) {
+        return accountServiceClient.getBalance(accountNumber);
+
     }
 
     // get Transaction History

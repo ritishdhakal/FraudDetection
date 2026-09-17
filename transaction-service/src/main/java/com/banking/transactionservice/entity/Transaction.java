@@ -42,6 +42,11 @@ public class Transaction {
 
     private TransactionType type;
 
+    @Column(precision = 15, scale = 2)
+    private BigDecimal senderPrevBalance;
+
+    @Column(precision = 15, scale = 2)
+    private BigDecimal receiverPrevBalance;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionStatus status;
