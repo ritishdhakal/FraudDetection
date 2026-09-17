@@ -3,7 +3,7 @@ package com.banking.frauddetectionservice.dto;
 public enum TransactionType {
 
     DEPOSIT,
-    WITHDRAWL,
+    WITHDRAWAL,
     PAYMENT,
     TRANSFER
 }

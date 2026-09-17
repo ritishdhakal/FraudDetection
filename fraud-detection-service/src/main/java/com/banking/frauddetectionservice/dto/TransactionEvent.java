@@ -1,6 +1,7 @@
 package com.banking.frauddetectionservice.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,5 +20,6 @@ public class TransactionEvent {
     private BigDecimal senderBalanceBefore;
     private BigDecimal receiverBalanceBefore;
     private TransactionType type;
+    private LocalDateTime createdAt;
 
 }

@@ -84,6 +84,7 @@ public class TransactionService {
                 savedTransaction.getAmount(),
 
                 savedTransaction.getDescription());
+        savedTransaction.getCreatedAt();
 
         BigDecimal senderPrevBalance = getPrevBalance(savedTransaction.getSenderAccountNumber());
         savedTransaction.setSenderPrevBalance(senderPrevBalance);

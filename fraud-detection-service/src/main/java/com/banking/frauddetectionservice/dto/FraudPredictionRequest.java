@@ -1,5 +1,7 @@
 package com.banking.frauddetectionservice.dto;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,9 +14,9 @@ import lombok.NoArgsConstructor;
 public class FraudPredictionRequest {
 
         private Integer steps;
-        private String amount;
-        private String oldbalanceOrg;
-        private String oldbalanceDest;
+        private BigDecimal amount;
+        private BigDecimal oldbalanceOrg;
+        private BigDecimal oldbalanceDest;
         private int type_CASH_OUT;
 
         private int type_DEBIT;
