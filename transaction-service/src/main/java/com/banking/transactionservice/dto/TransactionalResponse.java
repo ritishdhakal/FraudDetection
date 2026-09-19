@@ -23,7 +23,8 @@ public class TransactionalResponse {
     private TransactionType type;
     private TransactionStatus status;
     private String description;
-
+    private BigDecimal senderPrevBalance;
+    private BigDecimal receiverPrevBalance;
     private String failureReason;
     private String referenceNumber;
     private LocalDateTime createdAt;

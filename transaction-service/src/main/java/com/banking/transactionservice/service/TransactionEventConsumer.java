@@ -38,10 +38,7 @@ public class TransactionEventConsumer {
             @Payload Map<String, Object> payload) {
         try {
             String transactionId = (String) payload.get("transactionId");
-            String accountNumber = (String) payload.get("accountNumber");
-            String reason = (String) payload.get("reason");
-
-            log.info("Verificatoin required - transaction :{} reason :{}", transactionId, reason);
+            log.info("Verificatoin required - transaction :{} reason :{}", transactionId);
 
             Transaction transaction = transactionRepository.findById(transactionId)
                     .orElseThrow(() -> new RuntimeException("Transaction not found" + transactionId));
@@ -74,8 +71,8 @@ public class TransactionEventConsumer {
             // notify user
             Map<String, Object> otpEvent = new HashMap<>();
             otpEvent.put("transactionId", transactionId);
-            otpEvent.put("accountNumber", accountNumber);
-            otpEvent.put("reason", reason);
+            // otpEvent.put("accountNumber", accountNumber);
+            // otpEvent.put("reason", reason);
             otpEvent.put("opt", otp);
 
             otpEvent.put("amount", payload.get("amount"));

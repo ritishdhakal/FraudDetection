@@ -58,6 +58,11 @@ public class TransactionService {
         log.info("SAGA START -Transfer :{} -> {} amount :{}", request.getSenderAccountNumber(),
                 request.getReceiverAccountNumber(), request.getAmount());
 
+        // save get prev balanace
+
+        BigDecimal senderPrevBalance = accountServiceClient.getBalance(request.getSenderAccountNumber());
+        BigDecimal receiverPrevBalance = accountServiceClient.getBalance(request.getReceiverAccountNumber());
+
         // debit amount from sender
         // get the accountService stuff
 
@@ -69,7 +74,12 @@ public class TransactionService {
         transaction.setType(TransactionType.TRANSFER);
         transaction.setStatus(TransactionStatus.PROCESSING);
         transaction.setDescription(request.getDescription());
+
         transaction.setRefrenceNumber(UUID.randomUUID().toString());
+        transaction.setCreatedAt(LocalDateTime.now());
+
+        transaction.setReceiverPrevBalance(senderPrevBalance);
+        transaction.setSenderPrevBalance(receiverPrevBalance);
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         log.info("Transaction saved as processing :{}", savedTransaction.getId());
@@ -77,24 +87,37 @@ public class TransactionService {
         /*
          * Publish event to kafka
          */
+        // BigDecimal senderPrevBalance =
+        // getPrevBalance(savedTransaction.getSenderAccountNumber());//this will not
+        // work because transacrion is not being saved in database
+        // System.out.println(senderPrevBalance);
+
+        // savedTransaction.setSenderPrevBalance(senderPrevBalance);
+
+        // BigDecimal receiverPrevBalance =
+        // getPrevBalance(savedTransaction.getReceiverAccountNumber());
+
+        // savedTransaction.setReceiverPrevBalance(receiverPrevBalance);
+        // System.out.println(receiverPrevBalance);
+
         TransactionInitiatedEvent event = new TransactionInitiatedEvent(
                 savedTransaction.getId(),
                 savedTransaction.getSenderAccountNumber(),
                 savedTransaction.getReceiverAccountNumber(),
                 savedTransaction.getAmount(),
+                savedTransaction.getType(),
+                savedTransaction.getDescription(),
+                savedTransaction.getCreatedAt(),
+                senderPrevBalance,
+                receiverPrevBalance);
 
-                savedTransaction.getDescription());
-
-        BigDecimal senderPrevBalance = getPrevBalance(savedTransaction.getSenderAccountNumber());
-        savedTransaction.setSenderPrevBalance(senderPrevBalance);
-
-        BigDecimal receiverPrevBalance = getPrevBalance(savedTransaction.getReceiverAccountNumber());
-        savedTransaction.setReceiverPrevBalance(receiverPrevBalance);
-        kafkaTemplate.send(TRANSACTION_INITIATED_TOPIC, savedTransaction.getId(), event);
+        kafkaTemplate.send(
+                TRANSACTION_INITIATED_TOPIC,
+                savedTransaction.getId(),
+                event);
         log.info("SAGA step-2 transaction initiated event published. {}", savedTransaction.getId());
 
         return mapToResponse(savedTransaction);
-
     }
 
     // get Transaction
