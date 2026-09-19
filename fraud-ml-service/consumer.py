@@ -49,6 +49,7 @@ for message in consumer:
 
 
     result  = {
+        "transactionId"  :transaction['trainsactionId'],
         "fraud" : bool(prediction),
         "probability": float(probability)
     }
