@@ -17,8 +17,8 @@ public class TransactionEvent {
     private String senderAccountNumber;
     private String receiverAccountNumber;
     private BigDecimal amount;
-    private BigDecimal senderBalanceBefore;
-    private BigDecimal receiverBalanceBefore;
+    private BigDecimal senderPrevBalance;
+    private BigDecimal receiverPrevBalance;
     private TransactionType type;
     private LocalDateTime createdAt;
 

@@ -3,8 +3,10 @@ package com.banking.frauddetectionservice.service;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import com.banking.frauddetectionservice.dto.FraudPredictionRequest;
 import com.banking.frauddetectionservice.dto.TransactionEvent;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -17,7 +19,10 @@ import lombok.extern.slf4j.Slf4j;
  * 
  * 
  */
+@RequiredArgsConstructor
 public class FraudDetectionEventConsumer {
+
+    private final FraudDetectionService fraudDetectionService;
 
     @KafkaListener(topics = "transaction.initiated", groupId = "fraud-detection-group")
 
@@ -30,11 +35,15 @@ public class FraudDetectionEventConsumer {
         log.info("Receiver AccountNumber :{}", event.getReceiverAccountNumber());
         log.info("Amount: {}", event.getAmount());
         log.info("Sender previous balance: {}",
-                event.getSenderBalanceBefore());
+                event.getSenderPrevBalance());
 
         log.info("Receiver previous balance: {}",
-                event.getReceiverBalanceBefore());
+                event.getReceiverPrevBalance());
         log.info("Type: {}", event.getType());
+
+        FraudPredictionRequest request = fraudDetectionService.builPredictionRequest(event);
+        fraudDetectionService.sendForFraudCheck(request);
+        log.info("Sent transaction to ML model");
 
     }
 

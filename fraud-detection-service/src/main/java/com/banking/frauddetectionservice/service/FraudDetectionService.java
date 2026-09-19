@@ -1,18 +1,25 @@
 package com.banking.frauddetectionservice.service;
 
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import com.banking.frauddetectionservice.dto.FraudPredictionRequest;
 import com.banking.frauddetectionservice.dto.TransactionEvent;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FraudDetectionService {
     /// function for feature engineering because
     /// we have senderPrevBalanve, reveiver prev balance stuff in java side where in
     /// ml side we have oldBalanceOrg, oldBalanceDest
+
+    private static final String FRAUD_CHECK_REQUEST_TOPIC = "fraud.prediction.request";
+
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public FraudPredictionRequest builPredictionRequest(
             TransactionEvent event) {
@@ -23,13 +30,13 @@ public class FraudDetectionService {
         // so I am planning to do like if it's let's say 2 -2:59 then stepis 2 14-14:59
         // step = 14 so we getting created at and converting that ot hours
 
-        request.setSteps(event.getCreatedAt().getHour()); // temporary
+        request.setStep(event.getCreatedAt().getHour()); // temporary
         request.setAmount(event.getAmount());
 
         // sender prev balance
 
-        request.setOldbalanceOrg(event.getSenderBalanceBefore());
-        request.setOldbalanceDest(event.getReceiverBalanceBefore());
+        request.setSenderPrevBalance(event.getSenderPrevBalance());
+        request.setReceiverPrevBalance(event.getReceiverPrevBalance());
 
         // one hot encoding for transaction type
 
@@ -44,9 +51,11 @@ public class FraudDetectionService {
                 break;
             case PAYMENT:
                 request.setType_PAYMENT(1);
+                break;
 
             case TRANSFER:
                 request.setType_TRANSFER(1);
+                break;
             default:
                 break;
         }
@@ -54,4 +63,9 @@ public class FraudDetectionService {
         return request;
 
     }
+
+    public void sendForFraudCheck(FraudPredictionRequest request) {
+        kafkaTemplate.send(FRAUD_CHECK_REQUEST_TOPIC, request);
+    }
+
 }
