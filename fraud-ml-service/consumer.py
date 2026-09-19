@@ -1,6 +1,8 @@
 from kafka import KafkaConsumer
 import json
 import joblib
+from producer import send_prediction_result
+
 
 # Load trained fraud model
 model = joblib.load("fraud_model.pkl")
@@ -39,9 +41,17 @@ for message in consumer:
     print("Model features:", model.n_features_in_)
     print("Feature names:", getattr(model, "feature_names_in_", None))
     # Make prediction
+
     prediction = model.predict(features)[0]
 
     probability = model.predict_proba(features)[0][1]
 
-    print("Fraud:", bool(prediction))
-    print("Probability:", probability)
+
+
+    result  = {
+        "fraud" : bool(prediction),
+        "probability": float(probability)
+    }
+
+
+    send_prediction_result(result)
