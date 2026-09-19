@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 // this is the thing i am getting from the ML model
 public class FraudPredictionResponse {
+    private String transactionId;
     private boolean isFraud;
     private BigDecimal probability;
 

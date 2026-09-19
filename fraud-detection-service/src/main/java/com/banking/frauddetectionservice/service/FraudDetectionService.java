@@ -3,6 +3,7 @@ package com.banking.frauddetectionservice.service;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import com.banking.frauddetectionservice.dto.FraudDetectedEvent;
 import com.banking.frauddetectionservice.dto.FraudPredictionRequest;
 import com.banking.frauddetectionservice.dto.FraudPredictionResponse;
 import com.banking.frauddetectionservice.dto.TransactionEvent;
@@ -28,9 +29,29 @@ public class FraudDetectionService {
     private static final String VERIFICATION_REQUIRED_TOPIC = "verification.required";
     private static final String FRAUD_CHECK_CLEAN_RESULT_TOPIC = "fraud.check.clean";
 
-    // public FraudPredictionResponse sendFraudDetectedEvent (){
+    public void sendFraudDetectedEvent(FraudPredictionResponse response) {
 
-    // }
+        log.info("transaction:{} fraud checked is completed :{}", response.getTransactionId());
+        FraudDetectedEvent event = new FraudDetectedEvent(
+                response.getTransactionId(),
+                response.isFraud(),
+                response.getProbability());
+        kafkaTemplate.send(VERIFICATION_REQUIRED_TOPIC, response.getTransactionId(), event);
+
+    }
+
+    // if the result is clean
+
+    public void sendFraudApprovedEvent(FraudPredictionResponse response) {
+
+        log.info("transaction:{} fraud checked is completed :{}", response.getTransactionId());
+        FraudDetectedEvent event = new FraudDetectedEvent(
+                response.getTransactionId(),
+                response.isFraud(),
+                response.getProbability());
+        kafkaTemplate.send(FRAUD_CHECK_CLEAN_RESULT_TOPIC, response.getTransactionId(), event);
+
+    }
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 

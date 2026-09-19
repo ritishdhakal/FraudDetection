@@ -54,12 +54,13 @@ public class FraudDetectionEventConsumer {
     public void consumePredictionResult(FraudPredictionResponse response) {
         log.info("Received fraud prediction result");
 
+        log.info("TransactionId :{}", response.getTransactionId());
         log.info("Is fraud :{} ", response.isFraud());
         log.info("probability :{}", response.getProbability());
 
         // check if it is fraud or not
         if (response.isFraud()) {
-            log.info("Fraud detected for the transaciton : ");
+            log.info("Fraud detected for the transaciton : ", response.getTransactionId());
 
             // sebd this event to the service
 

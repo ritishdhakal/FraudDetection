@@ -14,10 +14,10 @@ import lombok.NoArgsConstructor;
 public class FraudDetectedEvent {
 
     private String transactionId; // this id transaction was fraud
-    private BigDecimal amount;
-    private String receiverAccountNumber;
-    private String senderAccountNumber;
-    private BigDecimal riskScore;
+    // private BigDecimal amount;
+    // private String receiverAccountNumber;
+    // private String senderAccountNumber;
     private boolean fraud;
+    private BigDecimal probability;
 
 }
