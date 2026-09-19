@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 // sending this to the ML model or ML is requesting this
 public class FraudPredictionRequest {
 
+        private String transacitonId;
         private Integer step;
         private BigDecimal amount;
         private BigDecimal senderPrevBalance;

@@ -4,6 +4,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import com.banking.frauddetectionservice.dto.FraudPredictionRequest;
+import com.banking.frauddetectionservice.dto.FraudPredictionResponse;
 import com.banking.frauddetectionservice.dto.TransactionEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,9 @@ public class FraudDetectionEventConsumer {
 
     private final FraudDetectionService fraudDetectionService;
 
-    @KafkaListener(topics = "transaction.initiated", groupId = "fraud-detection-group")
+    // from the transaction service
+
+    @KafkaListener(topics = "transaction.initiated", groupId = "fraud-detection-service-group")
 
     // function that receives the data from kafka and basically using
     // dto/transactionevent file
@@ -44,7 +47,30 @@ public class FraudDetectionEventConsumer {
         FraudPredictionRequest request = fraudDetectionService.builPredictionRequest(event);
         fraudDetectionService.sendForFraudCheck(request);
         log.info("Sent transaction to ML model");
+    }
 
+    // consume again from the pyhton after result
+    @KafkaListener(topics = "fraud.detection.result", groupId = "fraud-detection-service-group")
+    public void consumePredictionResult(FraudPredictionResponse response) {
+        log.info("Received fraud prediction result");
+
+        log.info("Is fraud :{} ", response.isFraud());
+        log.info("probability :{}", response.getProbability());
+
+        // check if it is fraud or not
+        if (response.isFraud()) {
+            log.info("Fraud detected for the transaciton : ");
+
+            // sebd this event to the service
+
+            fraudDetectionService.sendFraudDetectedEvent(response);
+        }
+
+        else {
+            log.info("Clean transaciton");
+            fraudDetectionService.sendFraudApprovedEvent(response);
+
+        }
     }
 
 }
